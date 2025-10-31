@@ -22,3 +22,10 @@
 
 ---
 
+План работ:
+https://docs.google.com/document/d/1n0Cj8lFEpzirD5GTflLbYK8tPA7hrdv7CikzaJpBR3s/edit?usp=sharing
+
+Логическая схема:
+<img width="879" height="1043" alt="2025-10-31_13-20" src="https://github.com/user-attachments/assets/1c5d275d-81f6-4f58-8a56-bdabbecac26e" />
+
+---
