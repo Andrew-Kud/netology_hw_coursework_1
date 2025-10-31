@@ -1,0 +1,18 @@
+# Terraform
+*.tfstate
+*.tfstate.backup
+.terraform/
+terraform.tfvars
+
+# Yandex Cloud
+key.json
+yc-*
+
+# Ansible
+secrets.yml
+vault-password.txt
+
+# OS / Editor
+.DS_Store
+*.swp
+.vscode/
