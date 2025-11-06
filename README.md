@@ -17,11 +17,12 @@
 ## Этап 1: Terraform
 
 Этапы создания инфраструктуры:
+
 https://docs.google.com/document/d/1P5oxvzPCOwivDtUC_eOXqr6bg8z3JbDDaJ_FwJa9pSo/edit?usp=sharing
 
 Схема:
 
-<img width="870" height="919" alt="terra_3" src="https://github.com/user-attachments/assets/61295e16-e854-4aab-bfba-e9c3e7e744ad" />
+<img width="970" height="1064" alt="terra_3" src="https://github.com/user-attachments/assets/d2deed61-74fe-4fc5-ae2d-422171c9ca20" />
 
 
 
