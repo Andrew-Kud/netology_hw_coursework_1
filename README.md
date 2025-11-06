@@ -24,6 +24,7 @@ https://docs.google.com/document/d/1P5oxvzPCOwivDtUC_eOXqr6bg8z3JbDDaJ_FwJa9pSo/
 <img width="870" height="919" alt="terra_3" src="https://github.com/user-attachments/assets/61295e16-e854-4aab-bfba-e9c3e7e744ad" />
 
 
+
 Результаты:
 
 <img width="2560" height="865" alt="terra_1" src="https://github.com/user-attachments/assets/d775f9c8-004b-4767-a614-349c65c7f526" />
