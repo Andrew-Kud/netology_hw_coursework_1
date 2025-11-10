@@ -24,8 +24,10 @@ https://docs.google.com/document/d/1P5oxvzPCOwivDtUC_eOXqr6bg8z3JbDDaJ_FwJa9pSo/
 
 
 Результаты:
+До terraform apply.
 <img width="2560" height="865" alt="terra_1" src="https://github.com/user-attachments/assets/d775f9c8-004b-4767-a614-349c65c7f526" />
 
+После terraform apply.
 <img width="2554" height="1434" alt="terra_2" src="https://github.com/user-attachments/assets/60d75543-1388-41a1-a489-652ba27ecd70" />
 
 PS: Часть комментраиев и объяснений оставил прямо в коде Terrafor, что бы не раздувать объяснения.
