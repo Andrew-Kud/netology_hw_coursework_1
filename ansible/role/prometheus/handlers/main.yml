@@ -1,0 +1,13 @@
+---
+- name: reload prometheus
+  uri:
+    url: "http://localhost:9090/-/reload"
+    method: POST
+  become: yes
+
+
+
+- name: daemon reload
+  systemd:
+    daemon_reload: yes
+  become: yes

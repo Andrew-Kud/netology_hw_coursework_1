@@ -1,0 +1,133 @@
+---
+#сбор метрик из nginx логов
+
+#Переменные
+- name: set nginx_exporter variables
+  set_fact:
+    nginx_exporter_version: "1.11.0"
+    nginx_exporter_user: "nginx_exporter"
+    nginx_exporter_port: 4927
+  tags: ['nginx_exporter', 'vars']
+
+
+
+#создать юзера для nginx_exporter
+- name: create nginx_exporter user
+  user:
+    name: "{{ nginx_exporter_user }}"
+    shell: /usr/sbin/nologin
+    createhome: no
+    state: present
+  become: yes
+  tags: ['nginx_exporter', 'system']
+
+
+
+#добавить пользователя в группу www-data чтоб мог читать логи
+- name: add nginx_exporter user to www-data group
+  user:
+    name: "{{ nginx_exporter_user }}"
+    groups: www-data
+    append: yes
+  become: yes
+  tags: ['nginx_exporter', 'system']
+
+#скачать nginx_exporter с гитхаба
+- name: download nginx_exporter binary
+  get_url:
+    url: "https://github.com/martin-helmich/prometheus-nginxlog-exporter/releases/download/v{{ nginx_exporter_version }}/prometheus-nginxlog-exporter_{{ nginx_exporter_version }}_linux_amd64.tar.gz"
+    dest: /tmp/nginx_exporter-{{ nginx_exporter_version }}.tar.gz
+  tags: ['nginx_exporter', 'download']
+# распаковать
+- name: extract nginx_exporter archive
+  unarchive:
+    src: /tmp/nginx_exporter-{{ nginx_exporter_version }}.tar.gz
+    dest: /tmp
+    remote_src: yes
+  become: yes
+  tags: ['nginx_exporter', 'extract']
+#с копировать бинарник в /usr/local/bin/
+- name: copy nginx_exporter binary
+  copy:
+    src: "/tmp/prometheus-nginxlog-exporter"
+    dest: /usr/local/bin/nginx_exporter
+    owner: root
+    group: root
+    mode: '0755'
+    remote_src: yes
+  become: yes
+  tags: ['nginx_exporter', 'install']
+
+
+
+#очистить tmp
+- name: clean /tmp/
+  file:
+    path: "{{ item }}"
+    state: absent
+  become: yes
+  loop:
+    - "/tmp/nginx_exporter-{{ nginx_exporter_version }}.tar.gz"
+    - "/tmp/prometheus-nginxlog-exporter"
+  tags: ['nginx_exporter', 'cleanup']
+
+
+
+#создать конфиг для nginx_exporter
+- name: create nginx_exporter config
+  template:
+    src: nginx_exporter.yml.j2
+    dest: /etc/nginx_exporter.yml
+    owner: root
+    group: root
+    mode: '0644'
+  become: yes
+  notify: restart nginx_exporter
+  tags: ['nginx_exporter', 'config']
+
+
+
+#создать systemd service для nginx_exporter
+- name: create nginx_exporter systemd service
+  template:
+    src: nginx_exporter.service.j2
+    dest: /etc/systemd/system/nginx_exporter.service
+    owner: root
+    group: root
+    mode: '0644'
+  become: yes
+  notify: daemon reload nginx_exporter
+  tags: ['nginx_exporter', 'systemd']
+
+
+
+# start и enable service
+- name: start and enable nginx_exporter service
+  systemd:
+    name: nginx_exporter
+    state: started
+    enabled: yes
+  become: yes
+  tags: ['nginx_exporter', 'service']
+
+
+
+#проверка доступности
+- name: check nginx_exporter to be ready
+  wait_for:
+    host: localhost
+    port: "{{ nginx_exporter_port }}"
+    delay: 1
+    timeout: 10
+  tags: ['nginx_exporter', 'verify']
+
+
+
+#проверка метрик
+- name: check nginx_exporter is responding
+  uri:
+    url: "http://localhost:{{ nginx_exporter_port }}/metrics"
+    return_content: yes
+  register: nginx_exporter_check
+  failed_when: "'nginx' not in nginx_exporter_check.content"
+  tags: ['nginx_exporter', 'verify']

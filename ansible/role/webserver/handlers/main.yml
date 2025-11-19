@@ -1,0 +1,14 @@
+---
+# рестарт nginx если что то изменилось
+- name: restart nginx
+  systemd:
+    name: nginx
+    state: restarted
+  become: yes
+
+#перечитать конфиг
+- name: reload nginx
+  systemd:
+    name: nginx
+    state: reloaded
+  become: yes

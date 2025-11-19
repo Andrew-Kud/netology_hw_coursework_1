@@ -1,0 +1,54 @@
+---
+#установка и конфигурация nginx
+
+#установка nginx
+- name: install nginx web-srv
+  apt:
+    name: nginx
+    state: present
+    update_cache: yes
+  become: yes
+  tags: ['webserver', 'packages']
+
+#скопировать статичные html из roles/webserver/files/html/
+- name: copy static website-files
+  copy:
+    src: html/
+    dest: /var/www/html/
+    owner: www-data
+    group: www-data
+    mode: '0755'
+  become: yes
+  notify: restart nginx
+  tags: ['webserver', 'content']
+
+#запустить nginx
+- name: start nginx is started
+  systemd:
+    name: nginx
+    state: started
+    enabled: yes
+  become: yes
+  tags: ['webserver', 'service']
+
+# Проверяем статус nginx
+- name: verify nginx status on port 80
+  wait_for:
+    host: localhost
+    port: 80
+    delay: 2
+    timeout: 30
+  tags: ['webserver', 'verify']
+
+#получить версию nginx для отладки
+- name: check nginx version
+  command: nginx -v
+  register: nginx_version
+  changed_when: false
+  tags: ['webserver', 'debug']
+
+#вывисти версию
+- name: output nginx version
+  debug:
+    msg: "Nginx version: {{ nginx_version.stderr }}"
+  tags: ['webserver', 'debug']

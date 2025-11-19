@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Default Nginx Page</title>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; padding: 50px; }
+        h1 { color: #555; }
+        .info { margin-top: 20px; color: #777; font-size: 16px; }
+    </style>
+</head>
+<body>
+    <h1>Welcome to nginx!</h1>
+    <p>If you see this page, the nginx web server is successfully installed and working.</p>
+    <div class="info">
+        Server: <strong>{{ ansible_hostname }}</strong>
+    </div>
+    <div class="info">
+        IP: <strong>{{ ansible_default_ipv4.address }}</strong>
+    </div>
+</body>
+</html>

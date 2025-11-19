@@ -1,0 +1,34 @@
+---
+- name: configure web-servers
+  hosts: webservers_server
+  gather_facts: yes
+
+  tasks:
+    #применить base-role, если ещё не применил
+    - name: apply base configuration
+      include_role:
+        name: base
+      tags: ['base']
+
+    # приминить webserver-role
+    - name: deploy webserver
+      include_role:
+        name: webserver
+      tags: ['webserver']
+
+    #установить node_exporter
+    - name: install node exporter
+      include_role:
+        name: node_exporter
+      tags: ['monitoring', 'node_exporter']
+
+    # установить nginx_exporter
+    - name: install nginx log exporter
+      include_role:
+        name: nginx_exporter
+      tags: ['monitoring', 'nginx_exporter']
+
+
+  vars:
+    nginx_port: 80
+    nginx_user: www-data

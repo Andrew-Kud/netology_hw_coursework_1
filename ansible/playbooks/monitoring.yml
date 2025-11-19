@@ -1,0 +1,26 @@
+---
+- name: configure prometheus server
+  hosts: prometheus
+  gather_facts: yes
+
+  tasks:
+    #базовый конфиг
+    - name: apply base configuration
+      include_role:
+        name: base
+      tags: ['base']
+
+    #установка prometheus
+    - name: install prometheus
+      include_role:
+        name: prometheus
+      tags: ['prometheus', 'monitoring']
+
+    # установка node exporter
+    - name: install node-exporter on promethes
+      include_role:
+        name: node_exporter
+      tags: ['monitoring', 'node_exporter']
+
+  vars:
+    prometheus_port: 9090

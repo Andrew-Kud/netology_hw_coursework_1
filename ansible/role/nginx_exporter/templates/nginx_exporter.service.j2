@@ -1,0 +1,14 @@
+[Unit]
+Description=Prometheus Nginx Log Exporter
+After=network.target
+
+[Service]
+Type=simple
+User={{ nginx_exporter_user }}
+Group=www-data
+ExecStart=/usr/local/bin/nginx_exporter -config-file /etc/nginx_exporter.yml
+Restart=on-failure
+RestartSec=5s
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,7 @@
+---
+#base role на все хосты
+- name: configure base system for all hosts
+  hosts: all
+  gather_facts: yes  #собрать инфу о системе перед выполнением
+  roles:
+    - base

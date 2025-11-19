@@ -1,0 +1,247 @@
+---
+#переменые
+- name: set prometheus variables
+  set_fact:
+    prometheus_version: "3.7.3"
+    prometheus_user: "prometheus"
+    prometheus_group: "prometheus"
+    prometheus_port: 9090
+    prometheus_data_dir: /var/lib/prometheus
+    prometheus_config_dir: /etc/prometheus
+  tags: ['prometheus', 'vars']
+
+
+
+#prometheus
+- name: create prometeus user
+  user:
+    name: "{{ prometheus_user }}"
+    shell: /usr/sbin/nologin
+    home: "{{ prometheus_data_dir }}"
+    createhome: yes
+    state: present
+  become: yes
+  tags: ['prometheus', 'system']
+
+
+
+#директория конфигов
+- name: create prometheus config-directory
+  file:
+    path: "{{ prometheus_config_dir }}"
+    owner: "{{ prometheus_user }}"
+    group: "{{ prometheus_group }}"
+    mode: '0755'
+    state: directory
+  become: yes
+  tags: ['prometheus', 'dirs']
+
+
+
+#директорию хранения данных
+- name: create prometheus data-directory
+  file:
+    path: "{{ prometheus_data_dir }}"
+    owner: "{{ prometheus_user }}"
+    group: "{{ prometheus_group }}"
+    mode: '0755'
+    state: directory
+  become: yes
+  tags: ['prometheus', 'dirs']
+
+
+
+#загрузка prometheus
+- name: download prometheus binary
+  get_url:
+    url: "https://github.com/prometheus/prometheus/releases/download/v{{ prometheus_version }}/prometheus-{{ prometheus_version }}.linux-amd64.tar.gz"
+    dest: /tmp/prometheus-{{ prometheus_version }}.linux-amd64.tar.gz
+  tags: ['prometheus', 'download']
+
+
+
+#распаковка
+- name: extract prometheus archive
+  unarchive:
+    src: /tmp/prometheus-{{ prometheus_version }}.linux-amd64.tar.gz
+    dest: /tmp
+    remote_src: yes
+  become: yes
+  tags: ['prometheus', 'extract']
+
+
+
+#копи бинарник prometheus
+- name: copy prometheus binary
+  copy:
+    src: "/tmp/prometheus-{{ prometheus_version }}.linux-amd64/prometheus"
+    dest: /usr/local/bin/prometheus
+    owner: root
+    group: root
+    mode: '0755'
+    remote_src: yes
+  become: yes
+  tags: ['prometheus', 'install']
+
+
+
+# копи promtool
+- name: copy promtool binary
+  copy:
+    src: "/tmp/prometheus-{{ prometheus_version }}.linux-amd64/promtool"
+    dest: /usr/local/bin/promtool
+    owner: root
+    group: root
+    mode: '0755'
+    remote_src: yes
+  become: yes
+  tags: ['prometheus', 'install']
+
+
+
+#копи конфигов (условно)
+- name: check if directory exists
+  stat:
+    path: "/tmp/prometheus-{{ prometheus_version }}.linux-amd64/consoles"
+  register: consoles_dir
+  tags: ['prometheus', 'install']
+
+- name: copy prometheus console templates
+  copy:
+    src: "/tmp/prometheus-{{ prometheus_version }}.linux-amd64/consoles"
+    dest: "{{ prometheus_config_dir }}/"
+    owner: "{{ prometheus_user }}"
+    group: "{{ prometheus_group }}"
+    remote_src: yes
+  become: yes
+  when: consoles_dir.stat.exists
+  tags: ['prometheus', 'install']
+
+
+
+#копи библиотеки (условно)
+- name: check if directory exists
+  stat:
+    path: "/tmp/prometheus-{{ prometheus_version }}.linux-amd64/console_libraries"
+  register: console_libraries_dir
+  tags: ['prometheus', 'install']
+
+- name: copy prometheus console_libraries
+  copy:
+    src: "/tmp/prometheus-{{ prometheus_version }}.linux-amd64/console_libraries"
+    dest: "{{ prometheus_config_dir }}/"
+    owner: "{{ prometheus_user }}"
+    group: "{{ prometheus_group }}"
+    remote_src: yes
+  become: yes
+  when: console_libraries_dir.stat.exists
+  tags: ['prometheus', 'install']
+
+
+
+#чистим tmp
+- name: clean up tmp files
+  file:
+    path: "{{ item }}"
+    state: absent
+  become: yes
+  loop:
+    - "/tmp/prometheus-{{ prometheus_version }}.linux-amd64.tar.gz"
+    - "/tmp/prometheus-{{ prometheus_version }}.linux-amd64"
+  tags: ['prometheus', 'cleanup']
+
+
+
+#создать конфиг prometheus.yml
+- name: create prometheus configuration
+  template:
+    src: prometheus.yml.j2
+    dest: "{{ prometheus_config_dir }}/prometheus.yml"
+    owner: "{{ prometheus_user }}"
+    group: "{{ prometheus_group }}"
+    mode: '0644'
+  become: yes
+  notify: reload prometheus
+  tags: ['prometheus', 'config']
+
+
+
+#проверка конфига
+- name: validate prometheus configuration
+  command: "/usr/local/bin/promtool check config {{ prometheus_config_dir }}/prometheus.yml"
+  become: yes
+  changed_when: false
+  tags: ['prometheus', 'validate']
+
+
+
+#создать службу prometheus
+- name: create prometheus systemdservice
+  template:
+    src: prometheus.service.j2
+    dest: /etc/systemd/system/prometheus.service
+    owner: root
+    group: root
+    mode: '0644'
+  become: yes
+  notify: daemon reload
+  tags: ['prometheus', 'systemd']
+
+
+
+#запустить и enable prometheus
+- name: start and enable prometheus service
+  systemd:
+    name: prometheus
+    state: started
+    enabled: yes
+  become: yes
+  tags: ['prometheus', 'service']
+
+
+
+# ждём пока служба поднимется
+- name: wait prometheus to be ready
+  wait_for:
+    host: localhost
+    port: "{{ prometheus_port }}"
+    delay: 2
+    timeout: 30
+  tags: ['prometheus', 'verify']
+
+
+
+#чекаем версию prometheus
+- name: check prometheus version
+  command: /usr/local/bin/prometheus --version
+  register: prometheus_version_output
+  changed_when: false
+  tags: ['prometheus', 'debug']
+
+
+
+#вывод версии
+- name: output prometheus version
+  debug:
+    msg: "{{ prometheus_version_output.stdout }}"
+  tags: ['prometheus', 'debug']
+
+
+
+#чекаем доступность api
+- name: check prometheus api
+  uri:
+    url: "http://localhost:{{ prometheus_port }}/api/v1/status/config"
+    method: GET
+    status_code: 200
+  register: prometheus_api_response
+  changed_when: false
+  tags: ['prometheus', 'verify']
+
+
+
+#вывод статуса
+- name: display prometheus api status
+  debug:
+    msg: "Prometheus api is responding with status {{ prometheus_api_response.status }}"
+  tags: ['prometheus', 'debug']

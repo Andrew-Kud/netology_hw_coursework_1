@@ -1,0 +1,98 @@
+---
+#подготовка системы
+
+#обновление кэша
+- name: update apt cache
+  apt:
+    update_cache: yes
+    cache_valid_time: 3600
+  become: yes
+  tags: ['packages']
+
+
+
+#обновление пакетов
+- name: upgrade packages
+  apt:
+    upgrade: safe
+  become: yes
+  tags: ['packages']
+
+
+
+#установка дефолтных утилит
+- name: install base utilities
+  apt:
+    name:
+      - curl
+      - wget
+      - htop
+      - nano
+      - git
+      - telnet
+      - net-tools
+      - unzip
+      - jq
+      - gpg
+      - ca-certificates
+      - software-properties-common
+      - python3-dev
+      - python3-pip
+    state: present
+  become: yes
+  tags: ['packages']
+
+
+
+#NTP для синхронизации времени
+- name: install NTP daemon
+  apt:
+    name: chrony
+    state: present
+  become: yes
+  tags: ['system']
+
+#запуск и добавление в автозагрузку
+- name: start chrony and enabled
+  systemd:
+    name: chrony
+    state: started
+    enabled: yes
+  become: yes
+  tags: ['system']
+
+#проверка синхронизации времени
+- name: check chrony-time sync-status
+  command: timedatectl status
+  register: timedatectl_output
+  changed_when: false
+  tags: ['system', 'debug']
+
+#вывод статуса синхронизации времени
+- name: display-output time sync-status
+  debug:
+    msg: "{{ timedatectl_output.stdout_lines }}"
+  tags: ['system', 'debug']
+
+
+
+#удаление ненужных пакетов
+- name: remove unnecessary packages
+  apt:
+    autoremove: yes
+  become: yes
+  tags: ['cleanup']
+
+
+
+#проверка версии питона для отладки
+- name: check python version
+  command: python3 --version
+  register: python_version
+  changed_when: false
+  tags: ['debug']
+#вывод текущей версии
+- name: output python version
+  debug:
+    msg: "Python version is: {{ python_version.stdout }}"
+  tags: ['debug']
