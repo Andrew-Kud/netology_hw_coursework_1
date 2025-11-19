@@ -3,7 +3,6 @@
 #ssh user@$(terraform output -raw bastion_public_ip)
 #curl http://$(terraform output -raw alb_public_ip)
 
-#опционально, но желательно.
 
 #внешний ip
 output "alb_public_ip" {
@@ -12,17 +11,17 @@ output "alb_public_ip" {
 }
 
 output "bastion_public_ip" {
-  description = "public ip of bastion host (SSH)"
+  description = "public ip of bastion host (SSH:22)"
   value       = yandex_compute_instance.bastion.network_interface.0.nat_ip_address
 }
 
 output "grafana_public_ip" {
-  description = "public ip of grafana (http://IP:3000)"
+  description = "public ip of grafana (http:3000)"
   value       = yandex_compute_instance.grafana.network_interface.0.nat_ip_address
 }
 
 output "kibana_public_ip" {
-  description = "public ip of kibana (http://IP:5601)"
+  description = "public ip of kibana (http:5601)"
   value       = yandex_compute_instance.kibana.network_interface.0.nat_ip_address
 }
 
@@ -49,6 +48,16 @@ output "elasticsearch_internal_ip" {
   value       = yandex_compute_instance.elastic.network_interface.0.ip_address
 }
 
+output "grafana_internal_ip" {
+  description = "local ip of grafana"
+  value       = yandex_compute_instance.grafana.network_interface.0.ip_address
+}
+
+output "kibana_internal_ip" {
+  description = "local ip of kibana"
+  value       = yandex_compute_instance.kibana.network_interface.0.ip_address
+}
+
 
 
 #общзая инфа в.т.ч связанные группы.
@@ -62,7 +71,6 @@ output "alb_info" {
     target_group_id   = yandex_alb_target_group.web_tg.id
   }
 }
-
 output "snapshot_schedule_info" {
   description = "Snapshot info"
   value = {
@@ -73,7 +81,6 @@ output "snapshot_schedule_info" {
     vms_count       = length(yandex_compute_snapshot_schedule.daily_snapshots.disk_ids)
   }
 }
-
 output "network_info" {
   description = "Network info"
   value = {
@@ -84,23 +91,16 @@ output "network_info" {
     nat_gateway_id     = yandex_vpc_gateway.nat_gateway.id
   }
 }
-
-
-
-#дополнительные команды (нашел в инете, не до конца понимаю, как их использовать, но говорят, что позволяют сразу использовать curl или ssh)
-#terraform output access_commands
+#дополнительные команды (terraform output access_commands)
 output "access_commands" {
   description = "Commands for accessing services"
   value = {
     website          = "curl -v http://${yandex_alb_load_balancer.web_alb.listener[0].endpoint[0].address[0].external_ipv4_address[0].address}"
     grafana          = "http://${yandex_compute_instance.grafana.network_interface.0.nat_ip_address}:3000"
     kibana           = "http://${yandex_compute_instance.kibana.network_interface.0.nat_ip_address}:5601"
-    bastion_ssh      = "ssh user@${yandex_compute_instance.bastion.network_interface.0.nat_ip_address}"
+    bastion_ssh      = "ssh -l ${var.user_name} ${yandex_compute_instance.bastion.network_interface.0.nat_ip_address}"
   }
 }
-
-
-
 #вывод сводки по всем вм
 output "all_vms" {
   description = "Listing all VM"

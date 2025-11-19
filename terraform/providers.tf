@@ -7,9 +7,9 @@ terraform {
       version = "0.129.0"
     }
   }
-
   required_version = ">=1.8.4"
 }
+
 
 
 #источник для авторизации (ключи от сервисного аккаунта yandex cloud)
@@ -17,5 +17,5 @@ provider "yandex" {
   # token                    = "do not use!!!"
   cloud_id                 = var.cloud_id
   folder_id                = var.folder_id
-  service_account_key_file = file("~/.authorized_key.json")
+  service_account_key_file = file(var.authorized_key)
 }

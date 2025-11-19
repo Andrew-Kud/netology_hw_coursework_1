@@ -1,10 +1,14 @@
+#сначала объёвляешь переменную и присваиваешь ей значение по умолчанию.
+#потом можно эту переменную задать в terraform.tfvars или получить динамически.
+
+#переменная имён (встречается в названиях тут и там)
 variable "flow" {
   type    = string
   default = "kursach-11-2025"
 }
 
 
-#3_для providers.tf
+#для providers.tf
 variable "cloud_id" {
   type    = string
 }
@@ -13,7 +17,7 @@ variable "folder_id" {
 }
 
 
-#переменные для ресурсов вм в main.tf
+#для ресурсов вм в main.tf
 variable "vm_project" {
   type = map(number)
   default = {
@@ -27,10 +31,22 @@ variable "vm_project" {
 }
 
 
-#защита cloud-init.yml
+#защита имён cloud-init.yml
 variable "user_name" {
   type = string
 }
 variable "public_ssh_key" {
+  type = string
+}
+
+
+#защита имён providers.tf
+variable "authorized_key" {
+  type = string
+}
+
+
+#защита пути rsa_public (не задействовал)
+variable "rsa_key" {
   type = string
 }
